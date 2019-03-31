@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <pthread.h>
 #include <unistd.h>
 /*
  *  Benjamin Straub
@@ -139,7 +138,6 @@ char* makeFullFilePath(char* programName) {
         //copy subPath to fullPath
         for(; i < subpathLength; i++) {
             fullFilePath[i] = PATH[j][i];
-
         } 
 
         //copy file delim to full file Path
@@ -185,6 +183,7 @@ char* makeFullFilePath(char* programName) {
 int execute(char* program, char** arguments){
     int status;
     int pid = fork();
+    int errorOccurred = 0;
     if(pid < 0) {
         printf("failed to create process\n");
     } else if(pid == 0) {
@@ -193,9 +192,15 @@ int execute(char* program, char** arguments){
         if(OVERRIDE_IN) {
             int fdIn = open(IN_PATH, O_RDONLY);
             int tmperr = errno;
-            if(fdIn < 0) fprintf(stderr,  "failed to open fd: %s error: %d", IN_PATH, tmperr);
-            dup2(fdIn, STDIN_FILENO);
-            close(fdIn);
+            if(fdIn < 0) { 
+                fprintf(stderr,  "failed to open fd: %s error: %d\n", IN_PATH, tmperr);
+                errorOccurred = 1;
+            } else {
+                dup2(fdIn, STDIN_FILENO);
+                close(fdIn);
+            }
+          
+                OVERRIDE_IN = 0;
         }
         
         if(OVERRIDE_OUT) {
@@ -204,12 +209,16 @@ int execute(char* program, char** arguments){
             if(fdOut < 0) fprintf(stderr, "failed to creat path: %s error %d", OUT_PATH, tmperr);
             dup2(fdOut, STDOUT_FILENO);
             close(fdOut);
+            OVERRIDE_OUT = 0;
         }
-        execve(program, arguments, environ);
+        if(errorOccurred == 0) {
+            execve(program, arguments, environ);
+        } else {
+            exit(1);
+        }
     } else {
         /* PARENT */
         wait(&status);
-        //printf("Status was: %d\n", status);
         if(status != 0) printf("Child process failed\nStatusCode: %d\n", status);
     }
     return pid;
@@ -240,7 +249,6 @@ void changeDir(char* path) {
 }
 
 
-
 /*
  *Input:
  *    a pointer to the path we're moving to. Can be empty
@@ -252,7 +260,7 @@ void changeDir(char* path) {
  *    gets the appropriate absolute path for a path. The return _must_ be freed
  *    handles relative pathing as well as absolute pathing and an empty string.
  */
-char* findPathForChangeDir(char* path) {
+char* getAbsolutePath(char* path) {
 
     char* absolutePath; // always return a malloc'd string so we can manage memory (always free)
 
@@ -298,14 +306,13 @@ char* findPathForChangeDir(char* path) {
 
         }
     }
-    //printf("AbsolutePath: %s\n", absolutePath);
     return absolutePath;
 }
 
 /*
  */
 void cd(char* path) {
-    char* absolutePath = findPathForChangeDir(path);
+    char* absolutePath = getAbsolutePath(path);
     changeDir(absolutePath);
     free(absolutePath);
 }
@@ -319,18 +326,75 @@ char commandIsCD(char* command) {
 }
 
 void checkUserInputForRedirectIn(char* inputPtr) {
+    int length = strlen(inputPtr);
     int i = 0;
+    int j = 0;
+
     while(inputPtr[i] != NUL) {
-        if(inputPtr[i] == '<') OVERRIDE_IN = 1;
+        if(inputPtr[i] == '<') {
+            OVERRIDE_IN = 1;
+            inputPtr[i] = NUL;
+            int k = i - 1;
+            while(inputPtr[k] == ' ' || inputPtr[k] == '	') {
+                inputPtr[k] = NUL; //stop from running into an error where command is being passed empty string
+                k--;
+            }
+            i++;
+            break;
+        }
         i++;
+    }
+    while(inputPtr[i] == ' ' || inputPtr[i] == '	') i++; //strip spaces so we don't get a strange string for fd opening
+    IN_PATH = malloc((length - i) * sizeof(char));
+    for(; i < length; i++) {
+        if(inputPtr[i] == ' ' || inputPtr[i] == '	') {
+            IN_PATH[j] = NUL;
+            break;
+        }
+        IN_PATH[j] = inputPtr[i];
+        j++;
     }
 }
 
 void checkUserInputForRedirectOut(char* inputPtr) {
+    int length = strlen(inputPtr);
     int i = 0;
+    int j = 0;
     while(inputPtr[i] != NUL) {
-        if(inputPtr[i] == '>') OVERRIDE_OUT = 1;
+        if(inputPtr[i] == '>') {
+            OVERRIDE_OUT = 1;
+            inputPtr[i] = NUL;
+            int k = i - 1;
+            while(inputPtr[k] == ' ' || inputPtr[k] == '	') {
+                inputPtr[k] = NUL;
+                k--;
+            }
+            i++;
+            break;
+        }
         i++;
+    }
+    while(inputPtr[i] == ' ' || inputPtr[i] == '	') i++;
+    OUT_PATH = malloc((length - i) * sizeof(char));
+    for(; i < length; i++) {
+        if(inputPtr[i] == ' ' || inputPtr[i] == '	') {
+            OUT_PATH[j] = NUL;
+            break;
+        }
+        OUT_PATH[j] = inputPtr[i];
+        j++;
+    }
+}
+
+void freeRedirects() {
+    if(IN_PATH != NULL) { 
+        free(IN_PATH);
+        IN_PATH = NULL;
+    }
+
+    if(OUT_PATH != NULL) {
+        free(OUT_PATH);
+        OUT_PATH = NULL;
     }
 }
 
@@ -437,20 +501,24 @@ int main() {
             getUserInput(inputPtr);
             
             //if User  input is empty, print new line and start loop again
-            if(userInputIsEmpty(inputPtr) == 1) {
+            if(userInputIsEmpty(inputPtr)) {
                 printf("\n");
                 continue;
             }
 
             //check if we should exit
-            if(checkUserInputForExit(inputPtr) == 1) {
+            if(checkUserInputForExit(inputPtr)) {
                 break;
             }
+            
+            // Check and set redirect in/out - out before in < >
+            checkUserInputForRedirectOut(inputPtr);
+            checkUserInputForRedirectIn(inputPtr);
 
             int* tokenArrayLength = malloc(sizeof(int*));
 
             tokenizedInput = s2a(inputPtr, tokenArrayLength);
-            if(commandIsCD(inputPtr) == 1) {
+            if(commandIsCD(inputPtr)) {
                 cd(tokenizedInput[1]);
             } else {
                 char* fullFilePath = makeFullFilePath(tokenizedInput[0]); 
@@ -461,6 +529,7 @@ int main() {
             }
         
             //Free all used memory!!!!
+            freeRedirects();
             freeTokenizedInput(*tokenArrayLength, tokenizedInput);
             free(tokenizedInput); 
             free(tokenArrayLength);
