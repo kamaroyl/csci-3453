@@ -1,3 +1,8 @@
+/*
+ * Ben Straub
+ * csci 3453
+ * 12/5/2019
+ */
 #ifndef _PROCESS_RESULTS_DYNAMIC_ARRAY_H
 #define _PROCESS_RESULTS_DYNAMIC_ARRAY_H
 #include "Process.h"

@@ -1,3 +1,8 @@
+/*
+ * Ben Straub
+ * csci 3453
+ * 12/5/2019
+ */
 #ifndef _SHORTEST_JOB_FIRST_H
 #define _SHORTEST_JOB_FIRST_H
 #include "Process.h"

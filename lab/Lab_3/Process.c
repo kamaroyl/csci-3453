@@ -1,3 +1,8 @@
+/*
+ * Ben Straub
+ * csci 3453
+ * 12/5/2019
+ */
 #include "Process.h"
 #include <stdlib.h>
 struct Process* createProcess(unsigned int pid, unsigned int arrival_time, unsigned int cpu_burst_time) {

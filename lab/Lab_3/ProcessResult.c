@@ -1,3 +1,8 @@
+/*
+ * Ben Straub
+ * csci 3453
+ * 12/5/2019
+ */
 #include <stdlib.h>
 #include <stdio.h>
 #include "ProcessResult.h"

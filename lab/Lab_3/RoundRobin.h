@@ -1,3 +1,8 @@
+/*
+ * Ben Straub
+ * csci 3453
+ * 12/5/2019
+ */
 #ifndef _ROUND_ROBIN_H
 #define _ROUND_ROBIN_H
 #include "Process.h"
