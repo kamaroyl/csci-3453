@@ -1,0 +1,30 @@
+#include <stdio.h>
+#include "ContextSwitch.h"
+
+int main() {
+    struct ContextSwitchDynamicArray* array = createContextSwitchDynamicArray(4);
+    struct ContextSwitch* contextSwitch1 = createContextSwitch(1, 0);
+    printf("Array: { capacity: %d, size: %d} \n", array->capacity, array->size);
+    addContextSwitchToDynamicArray(array, contextSwitch1);
+    printf("Array: { capacity: %d, size: %d} \n", array->capacity, array->size);
+    struct ContextSwitch* contextSwitch2 = createContextSwitch(2,10);
+    addContextSwitchToDynamicArray(array, contextSwitch2);
+    printf("Array: { capacity: %d, size: %d} \n", array->capacity, array->size);
+    struct ContextSwitch* contextSwitch3 = createContextSwitch(3,12);
+    addContextSwitchToDynamicArray(array, contextSwitch3);
+    printf("Array: {capacity: %d, size %d} \n", array->capacity, array->size); 
+    struct ContextSwitch* contextSwitch4 = createContextSwitch(4, 21);
+    addContextSwitchToDynamicArray(array, contextSwitch4);
+    struct ContextSwitch* retrieved = getContextSwitchAtIndex(array, 2);
+    printf("Array: { capacity: %d, size: %d} \n", array->capacity, array->size);
+    printf("contextSwitch: { pid: %d, time: %d }\n", retrieved->pid, retrieved->time);
+    retrieved = getContextSwitchAtIndex(array, 10);
+    if( retrieved == NULL ) {
+        printf("getContextSwitchAtIndex correctly returned NULL\n");
+    } else {
+        printf("getContextSwitchAtIndex returned something else than NULL\n");
+    }
+
+    printGanttChart(array, 26);
+    return 0;
+}
