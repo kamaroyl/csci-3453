@@ -9,6 +9,8 @@ to run -
   make
   ./Lab3 input_file Algorithm (RR only Quanta)
 
+All example pictures are under PicExample
+
 ## Provided Example:
 
 1   0   10
