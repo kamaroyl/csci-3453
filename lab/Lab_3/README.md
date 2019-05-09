@@ -12,28 +12,33 @@ to run -
 All example pictures are under PicExample
 
 ## Provided Example:
+```
 
 1   0   10
 2   1    2
 3   2    9
 4   3    5
-
+```
 ### FCFS:
+```
 P1                            P2    P3                         P4
 *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *
 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
-
+```
 ### SJF:
+```
 P1 P2    P4             P3                         P1
 *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *
 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
-
+```
 ### RR: 2
+```
 P1    P2    P3    P1    P4    P3    P1    P4    P3    P1    P4 P3    P1    P3
 *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *  *
 0  1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
-
+```
 ## Basic Algorithm:
+```
 ContextSwitchArray[] 
 ContextSwitch{"Pid":1, "time":1}
 
@@ -112,3 +117,4 @@ RR(CurrentProcess, ArrivalQueue, allowedTime)
 checkDone( )
     if( Results.length == ArrayOfProcesses.length ) 
 	    done = true
+```
